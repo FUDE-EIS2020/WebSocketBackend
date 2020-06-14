@@ -1,10 +1,11 @@
 package icyfrog.demo.controller;
 
 
+import com.alibaba.fastjson.JSON;
+import icyfrog.demo.DTO.MarketDepthChangeMsg;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import javax.websocket.OnClose;
 import javax.websocket.OnError;
@@ -18,20 +19,18 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Component
+@RestController
 @ServerEndpoint("/connection/{username}")
 public class WebSocketController {
 
     // 保存 username --> session 的映射关系
     // TODO: 后面也许可以写进redis里
-    private ConcurrentHashMap<String, Session> userSessionMap = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<String, Session> userSessionMap = new ConcurrentHashMap<>();
 
     //  TODO: LOG
     @OnOpen
     public void OnOpen(Session session, @PathParam("username") String username) {
-        //if(userSessionMap.contains(username)) {return;}
         userSessionMap.put(username,session);
-        //log.info("Connection connected");
-        //log.info("username: "+ username + "\t session: " + session.toString());
     }
 
 
@@ -49,16 +48,27 @@ public class WebSocketController {
         log.info("Connection error");
     }
 
+
+    // TODO: send to some users not ALL
     // send message to every username
     @ResponseBody
-    @GetMapping(path = "/sendTextTest")
+    @GetMapping(path = "/sendMessage")
     public void sendTextTest() throws IOException {
-        //return "123";
         System.out.println("lined text test");
-        // Session s = userSessionMap.get("wxm");
-        //s.getBasicRemote().sendText("尝试从后端发送消息");
+        System.out.println("Map size: " + userSessionMap.size());
         for(Map.Entry<String, Session> entry:userSessionMap.entrySet()) {
             entry.getValue().getBasicRemote().sendText("尝试从后端发送消息");
         }
     }
+
+    @ResponseBody
+    @PostMapping(path = "/sendFront")
+    public String sendFront (@RequestBody MarketDepthChangeMsg o) throws IOException {
+        for(Map.Entry<String, Session> entry:userSessionMap.entrySet()) {
+            entry.getValue().getBasicRemote().sendText(JSON.toJSONString(o));
+        }
+
+        return "OK, Get New Market depth";
+    }
+
 }
