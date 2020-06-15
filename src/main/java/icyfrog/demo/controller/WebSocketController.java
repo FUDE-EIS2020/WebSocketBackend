@@ -67,8 +67,16 @@ public class WebSocketController {
         for(Map.Entry<String, Session> entry:userSessionMap.entrySet()) {
             entry.getValue().getBasicRemote().sendText(JSON.toJSONString(o));
         }
-
         return "OK, Get New Market depth";
     }
+    /*
+    {
+    "brokerId":"1",
+    "productId":"3",
+    "marketDepth":[
+        [{"amount":450,"price":110.0},{"amount":450,"price":110.0},{"amount":450,"price":110.0}],
+        [{"amount":450,"price":100.0}]]
+    }
+     */
 
 }
